@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>You’ve Been Invited • Sheneli F’do</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: #f5ebe0;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+
+    /* Each section fills the viewport */
+    .section {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      z-index: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .section.active {
+      opacity: 1;
+      pointer-events: all;
+      z-index: 10;
+    }
+
+    /* Full-width image, capped at phone width */
+    .section img.bg {
+      width: 100%;
+      max-width: 480px;
+      display: block;
+      margin: 0 auto;
+      -webkit-user-drag: none;
+      user-select: none;
+    }
+
+    /* Section 1 is a big tap target */
+    #s1 { cursor: pointer; justify-content: center; }
+    #s1 img.bg { pointer-events: none; }
+
+    #s1 .tap-hint {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.68rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #9e7a2c;
+      animation: blink 2s ease-in-out infinite;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* RSVP button sits below the section-3 image */
+    #s3 .rsvp-btn {
+      display: block;
+      width: min(220px, 55%);
+      margin: 0.25rem auto 0.4rem;
+      padding: 0.75rem 0;
+      background: #6b1a2a;
+      color: #e2c97e;
+      font-size: 0.75rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      text-align: center;
+      text-decoration: none;
+      border: 1px solid #c9a84c;
+      transition: background 0.2s, color 0.2s;
+    }
+    #s3 .rsvp-btn:hover,
+    #s3 .rsvp-btn:active {
+      background: #c9a84c;
+      color: #3d0a15;
+    }
+
+    /* Back to Envelope button */
+    .back-btn {
+      display: block;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 0.65rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #6b1a2a;
+      padding: 0.6rem 0 2rem;
+      width: 100%;
+      text-align: center;
+      font-family: sans-serif;
+    }
+    .back-btn:hover { color: #c9a84c; }
+
+    /* Scroll hint on section 2 */
+    .scroll-hint {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      pointer-events: none;
+    }
+    .scroll-hint span {
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #9e7a2c;
+      animation: blink 2s ease-in-out infinite;
+      white-space: nowrap;
+    }
+    .scroll-hint .arrow {
+      color: #c9a84c;
+      font-size: 1rem;
+      animation: bounce 1.6s ease-in-out infinite;
+    }
+
+    @keyframes blink  { 0%,100%{opacity:.35} 50%{opacity:1} }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+  </style>
+</head>
+<body>
+
+  <!-- SECTION 1 — closed envelope, tap to open -->
+  <section id="s1" class="section active" onclick="openEnvelope()">
+    <img class="bg" src="Section-1.PNG" alt="You've been invited" />
+    <p class="tap-hint">tap to open</p>
+  </section>
+
+  <!-- SECTION 2 — open envelope with photos, scroll for details -->
+  <section id="s2" class="section" aria-hidden="true">
+    <img class="bg" src="Section-2.PNG" alt="Open envelope" />
+    <button class="back-btn" onclick="backToEnvelope()">Back to Envelope</button>
+    <div class="scroll-hint" id="scroll-hint">
+      <span>scroll for details</span>
+      <div class="arrow">&#8595;</div>
+    </div>
+  </section>
+
+  <!-- SECTION 3 — invitation details + RSVP -->
+  <section id="s3" class="section" aria-hidden="true">
+    <img class="bg" src="Section-3.PNG" alt="Invitation details" />
+    <a class="rsvp-btn"
+       href="https://wa.me/94773775678?text=yes"
+       target="_blank"
+       rel="noopener noreferrer">RSVP via WhatsApp</a>
+    <button class="back-btn" onclick="backToEnvelope()">Back to Envelope</button>
+  </section>
+
+  <script>
+    const s1 = document.getElementById('s1');
+    const s2 = document.getElementById('s2');
+    const s3 = document.getElementById('s3');
+    let opened = false;
+
+    function openEnvelope() {
+      if (opened) return;
+      opened = true;
+
+      s1.classList.remove('active');
+      s2.classList.add('active');
+      s2.removeAttribute('aria-hidden');
+      s2.scrollTop = 0;
+
+      let s3Done = false;
+      s2.addEventListener('scroll', function onScroll() {
+        if (s3Done) return;
+        if (s2.scrollTop + s2.clientHeight >= s2.scrollHeight - 60) {
+          s3Done = true;
+          s2.removeEventListener('scroll', onScroll);
+          const hint = document.getElementById('scroll-hint');
+          if (hint) hint.style.display = 'none';
+          s2.classList.remove('active');
+          s2.setAttribute('aria-hidden', 'true');
+          s3.classList.add('active');
+          s3.removeAttribute('aria-hidden');
+          s3.scrollTop = 0;
+        }
+      });
+    }
+
+    function backToEnvelope() {
+      [s2, s3].forEach(function(s) {
+        s.classList.remove('active');
+        s.setAttribute('aria-hidden', 'true');
+        s.scrollTop = 0;
+      });
+      opened = false;
+      s1.classList.add('active');
+      const hint = document.getElementById('scroll-hint');
+      if (hint) hint.style.display = '';
+    }
+  </script>
+</body>
+</html>
